@@ -1,0 +1,137 @@
+// C++ code
+//
+#include <Adafruit_LiquidCrystal.h>
+
+int seconds = 0;
+
+Adafruit_LiquidCrystal lcd_1(0);
+
+int potPin = A0; //pinul potentiometrului
+int status = 0; //statusul potentiometrului
+
+const int buttonPin = 2;   
+const int ledPin1 = 11; //stopuri frana   
+const int ledPin2 = 12; //stopuri frana
+
+const int fotorez_faruri_auto_Pin = A3; // pinul analogic folosit pentru fotorezistență
+const int far_fata_1_Pin = 9; 
+const int far_fata_2_Pin = 10; 
+
+const int pin_usa_fata_stanga = A1;
+const int pin_usa_fata_dreapta = A2;
+
+int buttonState = 0;
+
+void setup()
+{
+  lcd_1.begin(16, 2);
+  
+  
+  pinMode(buttonPin, INPUT);
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT); 
+  
+  
+  pinMode(far_fata_1_Pin, OUTPUT);
+  pinMode(far_fata_2_Pin, OUTPUT);
+  
+  
+  pinMode(pin_usa_fata_stanga, INPUT);
+  pinMode(pin_usa_fata_dreapta, INPUT);
+  
+  
+  
+  Serial.begin(9600);
+  
+  
+  //afisare pe ecran LCD IGNITION- si FARURI-
+  lcd_1.setCursor(2, 0);  
+  lcd_1.print("IGNITION-");
+  
+  lcd_1.setCursor(2, 1);
+  lcd_1.print("FARURI-");
+}
+
+void motor()
+{
+  int potValue = analogRead(potPin); //citire valori
+  
+  
+  int percent = map(potValue, 0, 1023, 0, 100); // transforma valoarea in procentaj (0-100)
+
+  if (percent <= 30) {
+    status = 0;
+  } else if (percent <= 60) {
+    status = 1;
+  } else {
+    status = 2;
+  }
+  
+//afisare pe ecran LCD starea motorului
+  String status_motor= percent <= 30 ? "OFF" : (percent <= 60) ? "ACC" : "ON ";
+  lcd_1.setCursor(11, 0);
+  lcd_1.print(status_motor);
+}
+
+void usi()
+{
+  //citirea valorilor date de fotorezistenta pt cele 2 usi
+  int val_Fata_Stanga = analogRead(pin_usa_fata_stanga);
+  int val_Fata_Dreapta = analogRead(pin_usa_fata_dreapta);
+  
+  // verificarea valorilor fotorezistentelor si actualizarea statusului usilor
+  String status_Fata_Stanga = val_Fata_Stanga < 500 ? "/" : "_";
+  String status_Fata_Dreapta = val_Fata_Dreapta < 500 ? "/" : "_";
+
+  // afisarea statusului usilor pe ecranul LCD
+  lcd_1.setCursor(0, 0);
+  lcd_1.print(status_Fata_Stanga);
+  lcd_1.setCursor(15,0);
+  lcd_1.print(status_Fata_Dreapta);
+}
+
+void faruri_automate()
+{
+  //cod faruri fata
+  int valoare_fotorez_faruri_automate = analogRead(fotorez_faruri_auto_Pin); // citeste valoarea fotorezistentei
+  if (valoare_fotorez_faruri_automate < 900 && status>0) { // verifica dacă valoarea este sub pragul ales
+    digitalWrite(far_fata_1_Pin, HIGH); // aprinde farurile
+    digitalWrite(far_fata_2_Pin, HIGH);
+  } else {
+    digitalWrite(far_fata_1_Pin, LOW);
+    digitalWrite(far_fata_2_Pin, LOW);// oprește farurile
+  }
+  String status_faruri_automate = (valoare_fotorez_faruri_automate < 500 && status > 0) ? "ON " : "OFF";
+  lcd_1.setCursor(9, 1);
+  lcd_1.print(status_faruri_automate);
+}
+
+void frana()
+{
+  //cod buton frana
+   buttonState = digitalRead(buttonPin);
+   if (buttonState == HIGH && status > 0) {             // daca butonul este apasat si motor nu e oprit
+    digitalWrite(ledPin1, HIGH);         // aprinde LED-ul 1
+    digitalWrite(ledPin2, HIGH);         // aprinde LED-ul 2
+  } else {                               // daca butonul nu este apasat
+    digitalWrite(ledPin1, LOW);          // opreste LED-ul 1
+    digitalWrite(ledPin2, LOW);          // opreste LED-ul 2
+  }
+  // . - pedala nu e apasata
+  // # - pedala e apasata
+  String status_frane= (buttonState == HIGH && status > 0)? "#" : ".";
+  lcd_1.setCursor(13,1);
+  lcd_1.print(status_frane);
+}
+
+void loop() {
+  
+  motor();
+  delay(10);
+  usi();
+  delay(10);
+  faruri_automate();    
+  delay(10);
+  frana();
+  delay(10);
+}
