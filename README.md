@@ -4,4 +4,5 @@ Simularea unei mașini cu ajutorul placii Arduino si a altor componente (Proiect
 - stingere/aprindere frane in functie de starea pedalei de frana (buton + LED-uri)
 - deschidere/inchidere usi (cu fotorezistente)
 - informatii despre starea motorului (cu ajutorul unui potentiometru)
-  Informatii despre fiecare sunt afisate pe un ecran LCD
+
+Informatii despre fiecare sunt afisate pe un ecran LCD
